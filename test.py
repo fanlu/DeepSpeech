@@ -15,49 +15,52 @@ from utils.utility import add_arguments, print_arguments
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
-add_arg('batch_size',       int,    128,    "Minibatch size.")
-add_arg('trainer_count',    int,    8,      "# of Trainers (CPUs or GPUs).")
-add_arg('beam_size',        int,    500,    "Beam search width.")
-add_arg('num_proc_bsearch', int,    8,      "# of CPUs for beam search.")
-add_arg('num_proc_data',    int,    8,      "# of CPUs for data preprocessing.")
-add_arg('num_conv_layers',  int,    2,      "# of convolution layers.")
-add_arg('num_rnn_layers',   int,    3,      "# of recurrent layers.")
-add_arg('rnn_layer_size',   int,    2048,   "# of recurrent cells per layer.")
-add_arg('alpha',            float,  2.5,    "Coef of LM for beam search.")
-add_arg('beta',             float,  0.3,    "Coef of WC for beam search.")
+add_arg('batch_size', int, 128, "Minibatch size.")
+add_arg('trainer_count', int, 8, "# of Trainers (CPUs or GPUs).")
+add_arg('beam_size', int, 500, "Beam search width.")
+add_arg('num_proc_bsearch', int, 8, "# of CPUs for beam search.")
+add_arg('num_proc_data', int, 8, "# of CPUs for data preprocessing.")
+add_arg('num_conv_layers', int, 2, "# of convolution layers.")
+add_arg('num_rnn_layers', int, 3, "# of recurrent layers.")
+add_arg('rnn_layer_size', int, 2048, "# of recurrent cells per layer.")
+add_arg('alpha', float, 2.5, "Coef of LM for beam search.")
+add_arg('beta', float, 0.3, "Coef of WC for beam search.")
 add_arg('stride_ms', float, 10.0, "stride_ms")
 add_arg('window_ms', float, 20.0, "window_ms")
-add_arg('cutoff_prob',      float,  1.0,    "Cutoff probability for pruning.")
-add_arg('cutoff_top_n',     int,    40,     "Cutoff number for pruning.")
-add_arg('use_gru',          bool,   False,  "Use GRUs instead of simple RNNs.")
-add_arg('use_gpu',          bool,   True,   "Use GPU or not.")
-add_arg('share_rnn_weights',bool,   True,   "Share input-hidden weights across "
-                                            "bi-directional RNNs. Not for GRU.")
-add_arg('test_manifest',   str,
+add_arg('sr', int, 16000, "sample_rate")
+add_arg('frame_stack', bool, False, "frame stack or not")
+add_arg('bi_direction', bool, True, "bi direction gru or not")
+add_arg('cutoff_prob', float, 1.0, "Cutoff probability for pruning.")
+add_arg('cutoff_top_n', int, 40, "Cutoff number for pruning.")
+add_arg('use_gru', bool, False, "Use GRUs instead of simple RNNs.")
+add_arg('use_gpu', bool, True, "Use GPU or not.")
+add_arg('share_rnn_weights', bool, True, "Share input-hidden weights across "
+                                         "bi-directional RNNs. Not for GRU.")
+add_arg('test_manifest', str,
         'data/librispeech/manifest.test-clean',
         "Filepath of manifest to evaluate.")
-add_arg('mean_std_path',    str,
+add_arg('mean_std_path', str,
         'data/librispeech/mean_std.npz',
         "Filepath of normalizer's mean & std.")
-add_arg('vocab_path',       str,
+add_arg('vocab_path', str,
         'data/librispeech/vocab.txt',
         "Filepath of vocabulary.")
-add_arg('model_path',       str,
+add_arg('model_path', str,
         './checkpoints/libri/params.latest.tar.gz',
         "If None, the training starts from scratch, "
         "otherwise, it resumes from the pre-trained model.")
-add_arg('lang_model_path',  str,
+add_arg('lang_model_path', str,
         'models/lm/common_crawl_00.prune01111.trie.klm',
         "Filepath for language model.")
-add_arg('decoding_method',  str,
+add_arg('decoding_method', str,
         'ctc_beam_search',
         "Decoding method. Options: ctc_beam_search, ctc_greedy",
-        choices = ['ctc_beam_search', 'ctc_greedy'])
-add_arg('error_rate_type',  str,
+        choices=['ctc_beam_search', 'ctc_greedy'])
+add_arg('error_rate_type', str,
         'wer',
         "Error rate type for evaluation.",
         choices=['wer', 'cer'])
-add_arg('specgram_type',    str,
+add_arg('specgram_type', str,
         'linear',
         "Audio feature type. Options: linear, mfcc.",
         choices=['linear', 'mfcc'])
@@ -72,8 +75,10 @@ def evaluate():
         vocab_filepath=args.vocab_path,
         mean_std_filepath=args.mean_std_path,
         augmentation_config='{}',
-	stride_ms=args.stride_ms,
-	window_ms=args.window_ms,
+        stride_ms=args.stride_ms,
+        window_ms=args.window_ms,
+        sr=args.sr,
+        frame_stack=args.frame_stack,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data,
         keep_transcription_text=True)
@@ -90,6 +95,7 @@ def evaluate():
         num_rnn_layers=args.num_rnn_layers,
         rnn_layer_size=args.rnn_layer_size,
         use_gru=args.use_gru,
+        bi_direction=args.bi_direction,
         pretrained_model_path=args.model_path,
         share_rnn_weights=args.share_rnn_weights)
 
@@ -137,9 +143,10 @@ def evaluate():
     time2 = time.time() - time1
     ds2_model.logger.info("cost time %s" % (time2))
 
+
 def main():
     import pdb
-    #pdb.set_trace()
+    # pdb.set_trace()
     print_arguments(args)
     paddle.init(use_gpu=args.use_gpu,
                 rnn_use_batch=True,
