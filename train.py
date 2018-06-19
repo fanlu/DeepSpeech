@@ -36,6 +36,7 @@ add_arg('stride_ms', float, 10.0, "stride_ms")
 add_arg('window_ms', float, 20.0, "stride_ms")
 add_arg('sr', int, 16000, "sample_rate")
 add_arg('frame_stack', bool, False, "frame stack or not")
+add_arg('bi_direction', bool, True, "bi direction gru or not")
 add_arg('train_manifest', str,
         'data/librispeech/manifest.train',
         "Filepath of train manifest.")
@@ -113,6 +114,7 @@ def train():
         num_rnn_layers=args.num_rnn_layers,
         rnn_layer_size=args.rnn_layer_size,
         use_gru=args.use_gru,
+        bi_direction=args.bi_direction,
         pretrained_model_path=args.init_model_path,
         share_rnn_weights=args.share_rnn_weights)
     ds2_model.train(
