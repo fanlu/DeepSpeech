@@ -91,7 +91,7 @@ class AudioFeaturizer(object):
         # extract spectrogram
         spec = self._compute_specgram(audio_segment.samples,
                                       audio_segment.sample_rate)
-        if self._specgram_type:
+        if self._frame_stack:
             spec = np.transpose(stack_frame(np.transpose(spec), 3, 3))
         return spec
 
