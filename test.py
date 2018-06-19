@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import time
 import argparse
 import functools
 import paddle.v2 as paddle
@@ -24,6 +25,8 @@ add_arg('num_rnn_layers',   int,    3,      "# of recurrent layers.")
 add_arg('rnn_layer_size',   int,    2048,   "# of recurrent cells per layer.")
 add_arg('alpha',            float,  2.5,    "Coef of LM for beam search.")
 add_arg('beta',             float,  0.3,    "Coef of WC for beam search.")
+add_arg('stride_ms', float, 10.0, "stride_ms")
+add_arg('window_ms', float, 20.0, "window_ms")
 add_arg('cutoff_prob',      float,  1.0,    "Cutoff probability for pruning.")
 add_arg('cutoff_top_n',     int,    40,     "Cutoff number for pruning.")
 add_arg('use_gru',          bool,   False,  "Use GRUs instead of simple RNNs.")
@@ -63,11 +66,14 @@ args = parser.parse_args()
 
 
 def evaluate():
+    time1 = time.time()
     """Evaluate on whole test data for DeepSpeech2."""
     data_generator = DataGenerator(
         vocab_filepath=args.vocab_path,
         mean_std_filepath=args.mean_std_path,
         augmentation_config='{}',
+	stride_ms=args.stride_ms,
+	window_ms=args.window_ms,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data,
         keep_transcription_text=True)
@@ -128,8 +134,12 @@ def evaluate():
           (args.error_rate_type, num_ins, num_ins, errors_sum / len_refs))
 
     ds2_model.logger.info("finish evaluation")
+    time2 = time.time() - time1
+    ds2_model.logger.info("cost time %s" % (time2))
 
 def main():
+    import pdb
+    #pdb.set_trace()
     print_arguments(args)
     paddle.init(use_gpu=args.use_gpu,
                 rnn_use_batch=True,

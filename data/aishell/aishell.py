@@ -16,7 +16,7 @@ import json
 import argparse
 from data_utils.utility import download, unpack
 
-DATA_HOME = os.path.expanduser('~/.cache/paddle/dataset/speech')
+DATA_HOME = os.path.expanduser('data/dataset/speech')
 
 URL_ROOT = 'http://www.openslr.org/resources/33'
 DATA_URL = URL_ROOT + '/data_aishell.tgz'

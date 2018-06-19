@@ -3,28 +3,28 @@
 cd ../.. > /dev/null
 
 # download language model
-cd models/lm > /dev/null
-sh download_lm_ch.sh
-if [ $? -ne 0 ]; then
-    exit 1
-fi
-cd - > /dev/null
-
-
-# download well-trained model
-cd models/aishell > /dev/null
-sh download_model.sh
-if [ $? -ne 0 ]; then
-    exit 1
-fi
-cd - > /dev/null
+#cd models/lm > /dev/null
+#sh download_lm_ch.sh
+#if [ $? -ne 0 ]; then
+#    exit 1
+#fi
+#cd - > /dev/null
+#
+#
+## download well-trained model
+#cd models/aishell > /dev/null
+#sh download_model.sh
+#if [ $? -ne 0 ]; then
+#    exit 1
+#fi
+#cd - > /dev/null
 
 
 # evaluate model
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python -u test.py \
 --batch_size=128 \
---trainer_count=8 \
+--trainer_count=4 \
 --beam_size=300 \
 --num_proc_bsearch=8 \
 --num_proc_data=8 \

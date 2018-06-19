@@ -32,6 +32,8 @@ add_arg('use_gru',          bool,   False,  "Use GRUs instead of simple RNNs.")
 add_arg('is_local',         bool,   True,   "Use pserver or not.")
 add_arg('share_rnn_weights',bool,   True,   "Share input-hidden weights across "
                                             "bi-directional RNNs. Not for GRU.")
+add_arg('stride_ms', float, 10.0, "stride_ms")
+add_arg('window_ms', float, 20.0, "stride_ms")
 add_arg('train_manifest',   str,
         'data/librispeech/manifest.train',
         "Filepath of train manifest.")
@@ -74,12 +76,16 @@ def train():
         augmentation_config=open(args.augment_conf_path, 'r').read(),
         max_duration=args.max_duration,
         min_duration=args.min_duration,
+	stride_ms=args.stride_ms,
+        window_ms=args.window_ms,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data)
     dev_generator = DataGenerator(
         vocab_filepath=args.vocab_path,
         mean_std_filepath=args.mean_std_path,
         augmentation_config="{}",
+	stride_ms=args.stride_ms,
+        window_ms=args.window_ms,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data)
     train_batch_reader = train_generator.batch_reader_creator(
