@@ -10,6 +10,7 @@ from data_utils.normalizer import FeatureNormalizer
 from data_utils.augmentor.augmentation import AugmentationPipeline
 from data_utils.featurizer.audio_featurizer import AudioFeaturizer
 from utils.utility import add_arguments, print_arguments
+from data_utils.frame_stacking import stack_frame
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -25,6 +26,8 @@ add_arg('manifest_path',    str,
 add_arg('output_path',    str,
         'data/librispeech/mean_std.npz',
         "Filepath of write mean and stddev to (.npz).")
+add_arg('stride_ms', float, 10.0, "stride_ms")
+add_arg('window_ms', float, 20.0, "stride_ms")
 # yapf: disable
 args = parser.parse_args()
 
@@ -33,11 +36,15 @@ def main():
     print_arguments(args)
 
     augmentation_pipeline = AugmentationPipeline('{}')
-    audio_featurizer = AudioFeaturizer(specgram_type=args.specgram_type)
+    audio_featurizer = AudioFeaturizer(specgram_type=args.specgram_type,
+                                       stride_ms=args.stride_ms,
+                                       window_ms=args.window_ms,
+                                       target_sample_rate=8000)
 
     def augment_and_featurize(audio_segment):
         augmentation_pipeline.transform_audio(audio_segment)
-        return audio_featurizer.featurize(audio_segment)
+        a = audio_featurizer.featurize(audio_segment)
+        return stack_frame(a, 3, 3)
 
     normalizer = FeatureNormalizer(
         mean_std_filepath=None,

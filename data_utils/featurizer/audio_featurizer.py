@@ -4,9 +4,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from data_utils.utility import read_manifest
-from data_utils.audio import AudioSegment
+# from data_utils.utility import read_manifest
+# from data_utils.audio import AudioSegment
 from python_speech_features import mfcc
+from python_speech_features import fbank
 from python_speech_features import delta
 
 
@@ -94,6 +95,9 @@ class AudioFeaturizer(object):
             return self._compute_linear_specgram(
                 samples, sample_rate, self._stride_ms, self._window_ms,
                 self._max_freq)
+        elif self._specgram_type in ['fbank', 'logfbank']:
+            return self._compute_fbank(samples, sample_rate, self._stride_ms,
+                                      self._window_ms, self._max_freq)
         elif self._specgram_type == 'mfcc':
             return self._compute_mfcc(samples, sample_rate, self._stride_ms,
                                       self._window_ms, self._max_freq)
@@ -185,3 +189,45 @@ class AudioFeaturizer(object):
         concat_mfcc_feat = np.concatenate(
             (mfcc_feat, d_mfcc_feat, dd_mfcc_feat))
         return concat_mfcc_feat
+
+    def _compute_fbank(self,
+                      samples,
+                      sample_rate,
+                      stride_ms=10.0,
+                      window_ms=20.0,
+                      max_freq=None,
+                       include_energy=False):
+        """Compute mfcc from samples."""
+        if max_freq is None:
+            max_freq = sample_rate / 2
+        if max_freq > sample_rate / 2:
+            raise ValueError("max_freq must not be greater than half of "
+                             "sample rate.")
+        if stride_ms > window_ms:
+            raise ValueError("Stride size must not be greater than "
+                             "window size.")
+        # compute the 13 cepstral coefficients, and the first one is replaced
+        # by log(frame energy)
+        fbank_feat, energy_f = fbank(
+            signal=samples,
+            samplerate=sample_rate,
+            winlen=0.001 * window_ms,
+            winstep=0.001 * stride_ms,
+            highfreq=max_freq)
+        if self._specgram_type == 'logfbank':
+            fbank_feat = np.log(fbank_feat)
+        if include_energy:
+            logenergy = np.log(energy_f)
+            fbank_feat = np.c_[fbank_feat, logenergy]
+        # Deltas
+        d_fbank_feat = delta(fbank_feat, 2)
+        # Deltas-Deltas
+        dd_fbank_feat = delta(d_fbank_feat, 2)
+        # transpose
+        fbank_feat = np.transpose(fbank_feat)
+        d_fbank_feat = np.transpose(d_fbank_feat)
+        dd_fbank_feat = np.transpose(dd_fbank_feat)
+        # concat above three features
+        concat_fbank_feat = np.concatenate(
+            (fbank_feat, d_fbank_feat, dd_fbank_feat))
+        return concat_fbank_feat

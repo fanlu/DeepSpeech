@@ -42,7 +42,7 @@ class DeepSpeech2Model(object):
     """
 
     def __init__(self, vocab_size, num_conv_layers, num_rnn_layers,
-                 rnn_layer_size, use_gru, pretrained_model_path,
+                 rnn_layer_size, use_gru, bi_direction, pretrained_model_path,
                  share_rnn_weights):
         self._create_network(vocab_size, num_conv_layers, num_rnn_layers,
                              rnn_layer_size, use_gru, share_rnn_weights)
@@ -50,6 +50,7 @@ class DeepSpeech2Model(object):
         self._inferer = None
         self._loss_inferer = None
         self._ext_scorer = None
+        self.bi_direction = bi_direction
         self._num_conv_layers = num_conv_layers
         self.logger = logging.getLogger("")
         self.logger.setLevel(level=logging.INFO)
@@ -439,4 +440,5 @@ class DeepSpeech2Model(object):
             num_rnn_layers=num_rnn_layers,
             rnn_size=rnn_layer_size,
             use_gru=use_gru,
+            bi_direction=self.bi_direction,
             share_rnn_weights=share_rnn_weights)

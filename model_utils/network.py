@@ -142,6 +142,21 @@ def bidirectional_gru_bn_layer(name, input, size, act):
     return paddle.layer.concat(input=[forward_gru, backward_gru])
 
 
+def gru_bn_layer(name, input, size, act):
+    input_proj_forward = paddle.layer.fc(
+        input=input,
+        size=size * 3,
+        act=paddle.activation.Linear(),
+        bias_attr=False)
+    # batch norm is only performed on input-related projections
+    input_proj_bn_forward = paddle.layer.batch_norm(
+        input=input_proj_forward, act=paddle.activation.Linear())
+    # forward and backward in time
+    forward_gru = paddle.layer.grumemory(
+        input=input_proj_bn_forward, act=act, reverse=False)
+    return forward_gru
+
+
 def conv_group(input, num_stacks, index_range_datas):
     """Convolution group with stacked convolution layers.
 
@@ -178,7 +193,7 @@ def conv_group(input, num_stacks, index_range_datas):
     return conv, output_num_channels, output_height
 
 
-def rnn_group(input, size, num_stacks, use_gru, share_rnn_weights):
+def rnn_group(input, size, num_stacks, use_gru, bi_direction, share_rnn_weights):
     """RNN group with stacked bidirectional simple RNN layers.
 
     :param input: Input layer.
@@ -198,13 +213,19 @@ def rnn_group(input, size, num_stacks, use_gru, share_rnn_weights):
     """
     output = input
     for i in xrange(num_stacks):
-        if use_gru:
+        if use_gru and bi_direction:
             output = bidirectional_gru_bn_layer(
                 name=str(i),
                 input=output,
                 size=size,
                 act=paddle.activation.Relu())
             # BRelu does not support hppl, need to add later. Use Relu instead.
+        elif use_gru and not bi_direction:
+            output = gru_bn_layer(
+                name=str(i),
+                input=output,
+                size=size,
+                act=paddle.activation.Relu())
         else:
             output = bidirectional_simple_rnn_bn_layer(
                 name=str(i),
@@ -225,6 +246,7 @@ def deep_speech_v2_network(audio_data,
                            num_rnn_layers=3,
                            rnn_size=256,
                            use_gru=False,
+                           bi_direction=True,
                            share_rnn_weights=True):
     """The DeepSpeech2 network structure.
 
@@ -282,6 +304,7 @@ def deep_speech_v2_network(audio_data,
         size=rnn_size,
         num_stacks=num_rnn_layers,
         use_gru=use_gru,
+        bi_direction=bi_direction,
         share_rnn_weights=share_rnn_weights)
     fc = paddle.layer.fc(
         input=rnn_group_output,

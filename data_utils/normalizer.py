@@ -85,3 +85,6 @@ class FeatureNormalizer(object):
         features = np.hstack(features)
         self._mean = np.mean(features, axis=1).reshape([-1, 1])
         self._std = np.std(features, axis=1).reshape([-1, 1])
+
+
+
