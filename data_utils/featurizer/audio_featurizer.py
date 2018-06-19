@@ -9,6 +9,7 @@ import numpy as np
 from python_speech_features import mfcc
 from python_speech_features import fbank
 from python_speech_features import delta
+from data_utils.frame_stacking import stack_frame
 
 
 class AudioFeaturizer(object):
@@ -43,6 +44,7 @@ class AudioFeaturizer(object):
                  specgram_type='linear',
                  stride_ms=10.0,
                  window_ms=20.0,
+                 frame_stack=False,
                  max_freq=None,
                  target_sample_rate=16000,
                  use_dB_normalization=True,
@@ -54,6 +56,7 @@ class AudioFeaturizer(object):
         self._target_sample_rate = target_sample_rate
         self._use_dB_normalization = use_dB_normalization
         self._target_dB = target_dB
+        self._frame_stack = frame_stack
 
     def featurize(self,
                   audio_segment,
@@ -86,8 +89,11 @@ class AudioFeaturizer(object):
         if self._use_dB_normalization:
             audio_segment.normalize(target_db=self._target_dB)
         # extract spectrogram
-        return self._compute_specgram(audio_segment.samples,
+        spec = self._compute_specgram(audio_segment.samples,
                                       audio_segment.sample_rate)
+        if self._specgram_type:
+            spec = np.transpose(stack_frame(np.transpose(spec), 3, 3))
+        return spec
 
     def _compute_specgram(self, samples, sample_rate):
         """Extract various audio features."""

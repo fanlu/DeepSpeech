@@ -69,6 +69,8 @@ class DataGenerator(object):
                  min_duration=0.0,
                  stride_ms=10.0,
                  window_ms=20.0,
+                 sr=16000,
+                 frame_stack=False,
                  max_freq=None,
                  specgram_type='linear',
                  use_dB_normalization=True,
@@ -85,6 +87,8 @@ class DataGenerator(object):
             specgram_type=specgram_type,
             stride_ms=stride_ms,
             window_ms=window_ms,
+            target_sample_rate=sr,
+            frame_stack=frame_stack,
             max_freq=max_freq,
             use_dB_normalization=use_dB_normalization)
         self._num_threads = num_threads

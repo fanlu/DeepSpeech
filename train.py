@@ -13,54 +13,56 @@ from utils.utility import add_arguments, print_arguments
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
-add_arg('batch_size',       int,    256,    "Minibatch size.")
-add_arg('trainer_count',    int,    8,      "# of Trainers (CPUs or GPUs).")
-add_arg('num_passes',       int,    200,    "# of training epochs.")
-add_arg('num_proc_data',    int,    16,     "# of CPUs for data preprocessing.")
-add_arg('num_conv_layers',  int,    2,      "# of convolution layers.")
-add_arg('num_rnn_layers',   int,    3,      "# of recurrent layers.")
-add_arg('rnn_layer_size',   int,    2048,   "# of recurrent cells per layer.")
-add_arg('num_iter_print',   int,    100,    "Every # iterations for printing "
-                                            "train cost.")
-add_arg('learning_rate',    float,  5e-4,   "Learning rate.")
-add_arg('max_duration',     float,  27.0,   "Longest audio duration allowed.")
-add_arg('min_duration',     float,  0.0,    "Shortest audio duration allowed.")
-add_arg('test_off',         bool,   False,  "Turn off testing.")
-add_arg('use_sortagrad',    bool,   True,   "Use SortaGrad or not.")
-add_arg('use_gpu',          bool,   True,   "Use GPU or not.")
-add_arg('use_gru',          bool,   False,  "Use GRUs instead of simple RNNs.")
-add_arg('is_local',         bool,   True,   "Use pserver or not.")
-add_arg('share_rnn_weights',bool,   True,   "Share input-hidden weights across "
-                                            "bi-directional RNNs. Not for GRU.")
+add_arg('batch_size', int, 256, "Minibatch size.")
+add_arg('trainer_count', int, 8, "# of Trainers (CPUs or GPUs).")
+add_arg('num_passes', int, 200, "# of training epochs.")
+add_arg('num_proc_data', int, 16, "# of CPUs for data preprocessing.")
+add_arg('num_conv_layers', int, 2, "# of convolution layers.")
+add_arg('num_rnn_layers', int, 3, "# of recurrent layers.")
+add_arg('rnn_layer_size', int, 2048, "# of recurrent cells per layer.")
+add_arg('num_iter_print', int, 100, "Every # iterations for printing "
+                                    "train cost.")
+add_arg('learning_rate', float, 5e-4, "Learning rate.")
+add_arg('max_duration', float, 27.0, "Longest audio duration allowed.")
+add_arg('min_duration', float, 0.0, "Shortest audio duration allowed.")
+add_arg('test_off', bool, False, "Turn off testing.")
+add_arg('use_sortagrad', bool, True, "Use SortaGrad or not.")
+add_arg('use_gpu', bool, True, "Use GPU or not.")
+add_arg('use_gru', bool, False, "Use GRUs instead of simple RNNs.")
+add_arg('is_local', bool, True, "Use pserver or not.")
+add_arg('share_rnn_weights', bool, True, "Share input-hidden weights across "
+                                         "bi-directional RNNs. Not for GRU.")
 add_arg('stride_ms', float, 10.0, "stride_ms")
 add_arg('window_ms', float, 20.0, "stride_ms")
-add_arg('train_manifest',   str,
+add_arg('sr', int, 16000, "sample_rate")
+add_arg('frame_stack', bool, False, "frame stack or not")
+add_arg('train_manifest', str,
         'data/librispeech/manifest.train',
         "Filepath of train manifest.")
-add_arg('dev_manifest',     str,
+add_arg('dev_manifest', str,
         'data/librispeech/manifest.dev-clean',
         "Filepath of validation manifest.")
-add_arg('mean_std_path',    str,
+add_arg('mean_std_path', str,
         'data/librispeech/mean_std.npz',
         "Filepath of normalizer's mean & std.")
-add_arg('vocab_path',       str,
+add_arg('vocab_path', str,
         'data/librispeech/vocab.txt',
         "Filepath of vocabulary.")
-add_arg('init_model_path',  str,
+add_arg('init_model_path', str,
         None,
         "If None, the training starts from scratch, "
         "otherwise, it resumes from the pre-trained model.")
 add_arg('output_model_dir', str,
         "./checkpoints/libri",
         "Directory for saving checkpoints.")
-add_arg('augment_conf_path',str,
+add_arg('augment_conf_path', str,
         'conf/augmentation.config',
         "Filepath of augmentation configuration file (json-format).")
-add_arg('specgram_type',    str,
+add_arg('specgram_type', str,
         'linear',
         "Audio feature type. Options: linear, mfcc.",
         choices=['linear', 'mfcc'])
-add_arg('shuffle_method',   str,
+add_arg('shuffle_method', str,
         'batch_shuffle_clipped',
         "Shuffle method.",
         choices=['instance_shuffle', 'batch_shuffle', 'batch_shuffle_clipped'])
@@ -76,16 +78,20 @@ def train():
         augmentation_config=open(args.augment_conf_path, 'r').read(),
         max_duration=args.max_duration,
         min_duration=args.min_duration,
-	stride_ms=args.stride_ms,
+        stride_ms=args.stride_ms,
         window_ms=args.window_ms,
+        sr=args.sr,
+        frame_stack=args.frame_stack,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data)
     dev_generator = DataGenerator(
         vocab_filepath=args.vocab_path,
         mean_std_filepath=args.mean_std_path,
         augmentation_config="{}",
-	stride_ms=args.stride_ms,
+        stride_ms=args.stride_ms,
         window_ms=args.window_ms,
+        sr=args.sr,
+        frame_stack=args.frame_stack,
         specgram_type=args.specgram_type,
         num_threads=args.num_proc_data)
     train_batch_reader = train_generator.batch_reader_creator(

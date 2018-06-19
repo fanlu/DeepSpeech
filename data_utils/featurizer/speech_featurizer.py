@@ -5,7 +5,7 @@ from __future__ import print_function
 
 from data_utils.featurizer.audio_featurizer import AudioFeaturizer
 from data_utils.featurizer.text_featurizer import TextFeaturizer
-
+from data_utils.frame_stacking import stack_frame
 
 class SpeechFeaturizer(object):
     """Speech featurizer, for extracting features from both audio and transcript
@@ -46,6 +46,7 @@ class SpeechFeaturizer(object):
                  specgram_type='linear',
                  stride_ms=10.0,
                  window_ms=20.0,
+                 frame_stack=False,
                  max_freq=None,
                  target_sample_rate=16000,
                  use_dB_normalization=True,
@@ -54,6 +55,7 @@ class SpeechFeaturizer(object):
             specgram_type=specgram_type,
             stride_ms=stride_ms,
             window_ms=window_ms,
+            frame_stack=frame_stack,
             max_freq=max_freq,
             target_sample_rate=target_sample_rate,
             use_dB_normalization=use_dB_normalization,
