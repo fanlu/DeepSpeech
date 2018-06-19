@@ -10,7 +10,6 @@ from data_utils.normalizer import FeatureNormalizer
 from data_utils.augmentor.augmentation import AugmentationPipeline
 from data_utils.featurizer.audio_featurizer import AudioFeaturizer
 from utils.utility import add_arguments, print_arguments
-from data_utils.frame_stacking import stack_frame
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -28,6 +27,8 @@ add_arg('output_path',    str,
         "Filepath of write mean and stddev to (.npz).")
 add_arg('stride_ms', float, 10.0, "stride_ms")
 add_arg('window_ms', float, 20.0, "stride_ms")
+add_arg('sr', int, 16000, "sample_rate")
+add_arg('frame_stack', bool, False, "frame stack or not")
 # yapf: disable
 args = parser.parse_args()
 
@@ -39,12 +40,12 @@ def main():
     audio_featurizer = AudioFeaturizer(specgram_type=args.specgram_type,
                                        stride_ms=args.stride_ms,
                                        window_ms=args.window_ms,
-                                       target_sample_rate=8000)
+                                       target_sample_rate=args.sr,
+                                       frame_stack=args.frame_stack)
 
     def augment_and_featurize(audio_segment):
         augmentation_pipeline.transform_audio(audio_segment)
-        a = audio_featurizer.featurize(audio_segment)
-        return stack_frame(a, 3, 3)
+        return audio_featurizer.featurize(audio_segment)
 
     normalizer = FeatureNormalizer(
         mean_std_filepath=None,
